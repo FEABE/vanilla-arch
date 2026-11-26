@@ -1,0 +1,18 @@
+{
+  "nodes": [
+    { "id": "browser", "x": 0, "y": 0, "label": "Browser" },
+    { "id": "api", "x": 2.4, "y": 0, "label": "API server", "desc": "No title, layers or zones: everything falls back to defaults." },
+    { "id": "cache", "x": 4.8, "y": -1.2, "label": "Redis cache" },
+    { "id": "db", "x": 4.8, "y": 1.2, "label": "Postgres database" }
+  ],
+  "edges": [["browser", "api"], ["api", "cache"], ["api", "db"]],
+  "scenarios": [
+    {
+      "id": "read", "label": "Cached read",
+      "flows": [
+        { "path": ["browser", "api", "cache"], "kind": "req", "back": true },
+        { "path": ["api", "db"], "kind": "req", "back": true, "delay": 700 }
+      ]
+    }
+  ]
+}

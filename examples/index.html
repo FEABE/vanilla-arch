@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'">
+<title>vanilla-arch example</title>
+<link rel="stylesheet" href="../vanilla-arch.css">
+<link rel="stylesheet" href="example.css">
+<script src="../vanilla-arch.js" defer></script>
+<script src="demo.js" defer></script>
+</head>
+<body>
+<main class="page">
+  <header class="bar">
+    <h1>vanilla-arch</h1>
+    <div class="controls">
+      <label>Example
+        <select id="example">
+          <option value="shop.json">Online shop</option>
+          <option value="minimal.json">Minimal (defaults)</option>
+        </select>
+      </label>
+      <button type="button" id="theme">Theme: auto</button>
+      <button type="button" id="export">Export PNG</button>
+    </div>
+  </header>
+  <h2 id="title"></h2>
+  <nav id="scenarios" class="tabs" aria-label="Scenarios"></nav>
+  <p id="scn-desc" class="muted"></p>
+  <div id="diagram"></div>
+  <section class="info">
+    <div>
+      <h3>Selected</h3>
+      <p id="selected" class="muted">Click a block.</p>
+    </div>
+    <div>
+      <h3>Status</h3>
+      <p id="status" class="muted"></p>
+    </div>
+  </section>
+  <p class="legend muted">Flow kinds: req · res · stream · signal · block · alert · deploy. Hover a block for details; drag sideways when the drawing is wider than the screen.</p>
+  <figure id="export-out" class="export" hidden>
+    <img id="export-img" alt="Exported diagram">
+    <figcaption id="export-cap"></figcaption>
+  </figure>
+</main>
+</body>
+</html>

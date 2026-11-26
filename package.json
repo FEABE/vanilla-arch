@@ -1,0 +1,15 @@
+{
+  "name": "vanilla-arch",
+  "version": "0.1.0",
+  "description": "Animated isometric architecture diagrams on Canvas 2D. One file, no dependencies, no build step.",
+  "main": "vanilla-arch.js",
+  "style": "vanilla-arch.css",
+  "files": ["vanilla-arch.js", "vanilla-arch.css", "README.md", "README.ko.md", "LICENSE"],
+  "scripts": {
+    "test": "node --test",
+    "start": "node examples/serve.mjs"
+  },
+  "keywords": ["architecture", "diagram", "isometric", "canvas", "vanilla-js", "no-dependencies"],
+  "license": "MIT",
+  "private": true
+}

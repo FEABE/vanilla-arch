@@ -1,0 +1,20 @@
+/* vanilla-arch | MIT License | (c) 2026 FEABE
+ * The --va-ui-* properties are set on the host by vanilla-arch.js from the palette it actually draws with,
+ * so the wrap background and the tooltip always match the canvas. The fallbacks only apply before create(). */
+.va-wrap {
+  position: relative;
+  background: var(--va-ui-bg, transparent);
+}
+/* Wider than the host: scroll sideways inside the wrap only (the page itself never scrolls horizontally) */
+.va-wrap.is-iso { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.va-canvas { display: block; width: 100%; touch-action: manipulation; }
+.va-wrap.is-iso .va-canvas { max-width: none; }
+.va-tip {
+  position: absolute; z-index: 2; max-width: 260px; padding: 6px 9px;
+  border: 1px solid var(--va-ui-line, #d0d7de); border-radius: 6px;
+  background: var(--va-ui-panel, #f3f5f7); color: var(--va-ui-muted, #656d76);
+  font-family: var(--va-ui-font, ui-monospace, monospace); font-size: 11.5px; line-height: 1.5;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .18); pointer-events: none;
+}
+.va-tip[hidden] { display: none; }
+.va-tip b { display: block; color: var(--va-ui-fg, #1f2328); margin-bottom: 2px; }

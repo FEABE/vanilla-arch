@@ -1,0 +1,88 @@
+{
+  "title": "Example Shop — a fictional online store",
+  "style": "iso",
+  "layers": [
+    { "id": "client", "label": "Clients" },
+    { "id": "edge", "label": "Edge" },
+    { "id": "svc", "label": "Services" },
+    { "id": "data", "label": "Data" },
+    { "id": "async", "label": "Async" },
+    { "id": "ops", "label": "Ops" },
+    { "id": "ext", "label": "External" }
+  ],
+  "zones": [
+    { "id": "clients", "label": "Clients", "layer": "client", "x": 0, "y": 0, "w": 2, "h": 7.2 },
+    { "id": "edge", "label": "Edge", "layer": "edge", "x": 2.4, "y": 0, "w": 2, "h": 7.2 },
+    { "id": "svc", "label": "Services", "layer": "svc", "tone": "group",
+      "pts": [[4.8, 0], [9.2, 0], [9.2, 4.6], [7.0, 4.6], [7.0, 7.2], [4.8, 7.2]] },
+    { "id": "ops", "label": "Ops", "layer": "ops", "x": 7.2, "y": 5.0, "w": 2, "h": 4.4 },
+    { "id": "data", "label": "Data", "layer": "data", "x": 9.6, "y": 0, "w": 2, "h": 7.2 },
+    { "id": "ext", "label": "External", "layer": "ext", "x": 12.0, "y": 0, "w": 2, "h": 2.6 },
+    { "id": "async", "label": "Async", "layer": "async", "x": 12.0, "y": 3.0, "w": 2, "h": 4.4 }
+  ],
+  "nodes": [
+    { "id": "shoppers", "layer": "client", "x": 1, "y": 1.2, "label": "Shoppers", "desc": "People browsing and buying in a web browser." },
+    { "id": "app", "layer": "client", "x": 1, "y": 3.6, "label": "Mobile app", "desc": "Native app talking to the public API." },
+    { "id": "admin", "layer": "client", "x": 1, "y": 6.0, "label": "Store admin", "desc": "Staff managing products, orders and refunds." },
+
+    { "id": "cdn", "layer": "edge", "x": 3.4, "y": 1.2, "icon": "cloud", "label": "CDN", "desc": "Caches static assets and pages close to shoppers." },
+    { "id": "gateway", "layer": "edge", "x": 3.4, "y": 3.6, "label": "API gateway", "desc": "Routing, rate limits and request validation for every API call." },
+
+    { "id": "web", "layer": "svc", "x": 5.8, "y": 1.2, "label": "Web storefront", "short": "Storefront", "desc": "Server-rendered product and checkout pages.", "tech": ["SSR"] },
+    { "id": "auth", "layer": "svc", "x": 5.8, "y": 3.6, "label": "Auth service", "short": "Auth", "desc": "Sign-in, sessions and access tokens." },
+    { "id": "catalog", "layer": "svc", "x": 5.8, "y": 6.0, "label": "Catalog service", "short": "Catalog", "desc": "Products, prices and stock levels." },
+    { "id": "orders", "layer": "svc", "x": 8.2, "y": 1.2, "stack": 2, "label": "Order service", "short": "Orders", "desc": "Creates orders, takes payment and hands work to the queue." },
+    { "id": "cart", "layer": "svc", "x": 8.2, "y": 3.3, "label": "Cart service", "short": "Cart", "desc": "Shopping carts, kept in the cache." },
+
+    { "id": "ci", "layer": "ops", "x": 8.2, "y": 6.2, "label": "CI/CD pipeline", "short": "CI/CD", "desc": "Builds, tests and rolls out new versions." },
+    { "id": "metrics", "layer": "ops", "x": 8.2, "y": 8.4, "label": "Monitoring", "desc": "Metrics, logs and alert rules." },
+
+    { "id": "db", "layer": "data", "x": 10.6, "y": 1.2, "label": "Orders DB", "desc": "Primary relational database.", "tech": ["PostgreSQL"] },
+    { "id": "cache", "layer": "data", "x": 10.6, "y": 3.6, "label": "Cache", "desc": "Sessions, carts and hot catalog reads.", "tech": ["Redis"] },
+    { "id": "queue", "layer": "data", "x": 10.6, "y": 6.0, "label": "Job queue", "desc": "Durable queue between the API and the workers." },
+
+    { "id": "pay", "layer": "ext", "kind": "ext", "x": 13, "y": 1.2, "s": 0.8, "label": "Payment provider", "short": "Payments", "desc": "Third-party card processing (dashed: not ours)." },
+    { "id": "worker", "layer": "async", "x": 13, "y": 4.0, "stack": 3, "label": "Background workers", "short": "Workers", "desc": "Thumbnails, receipts and stock sync.", "tech": ["worker"] },
+    { "id": "files", "layer": "async", "x": 13, "y": 6.4, "label": "Object storage", "short": "Storage", "desc": "Product images and generated receipts." }
+  ],
+  "edges": [
+    ["shoppers", "cdn"], ["cdn", "web"], ["cdn", "gateway"], ["app", "gateway"], ["admin", "gateway"],
+    ["gateway", "auth"], ["gateway", "catalog"], ["gateway", "orders"], ["gateway", "cart"],
+    ["auth", "cache"], ["cart", "cache"], ["catalog", "cache"],
+    ["orders", "db"], ["orders", "pay"], ["orders", "queue"], ["queue", "worker"], ["worker", "files"],
+    ["ci", "orders", "p2p"]
+  ],
+  "scenarios": [
+    {
+      "id": "checkout", "label": "Checkout",
+      "desc": "A shopper places an order: the order is stored, paid for, and follow-up work goes to the queue.",
+      "flows": [
+        { "path": ["shoppers", "cdn", "gateway", "orders"], "kind": "req", "back": true, "every": 2600 },
+        { "path": ["orders", "db"], "kind": "req", "back": true, "delay": 600, "every": 2600 },
+        { "path": ["orders", "pay"], "kind": "req", "back": true, "delay": 1000, "every": 2600 },
+        { "path": ["orders", "queue", "worker"], "kind": "signal", "delay": 1500, "every": 2600 },
+        { "path": ["worker", "files"], "kind": "stream", "delay": 2100, "every": 2600 }
+      ]
+    },
+    {
+      "id": "reject", "label": "Rejected sign-in",
+      "desc": "An expired token is refused by the auth service and the failure rate shows up as an alert.",
+      "flows": [
+        { "path": ["app", "gateway", "auth"], "kind": "block", "every": 2200 },
+        { "path": ["auth", "cache"], "kind": "req", "back": true, "delay": 300, "every": 2200 },
+        { "path": ["auth", "metrics"], "kind": "alert", "delay": 1200, "every": 2200 },
+        { "path": ["metrics", "admin"], "kind": "alert", "delay": 1800, "every": 2200 }
+      ]
+    },
+    {
+      "id": "release", "label": "Rolling release",
+      "desc": "The pipeline rolls out a new version; health signals flow back to monitoring.",
+      "flows": [
+        { "path": ["ci", "orders"], "kind": "deploy", "every": 3000 },
+        { "path": ["ci", "catalog"], "kind": "deploy", "delay": 700, "every": 3000 },
+        { "path": ["orders", "metrics"], "kind": "signal", "delay": 1500, "every": 3000 },
+        { "path": ["catalog", "metrics"], "kind": "signal", "delay": 1900, "every": 3000 }
+      ]
+    }
+  ]
+}
