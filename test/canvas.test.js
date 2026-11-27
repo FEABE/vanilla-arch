@@ -61,3 +61,17 @@ test('validate() warns about coordinate spans too big for one canvas', () => {
     assert.ok(VA.validate({ zones: [{ x: 0, y: 0, w: 1, h: 50000 }], nodes: [] }).some((p) => /too big for one canvas/.test(p)));
     assert.deepEqual(VA.validate({ nodes: [{ id: 'a', label: 'A', x: 0, y: 0 }, { id: 'b', label: 'B', x: 60, y: 40 }] }), []);
 });
+
+test('validate() does not warn about tall but narrow drawings that create() draws unscaled (0.1.2)', () => {
+    const two = (x, y) => ({ nodes: [{ id: 'a', label: 'A', x: 0, y: 0 }, { id: 'b', label: 'B', x, y }] });
+    for (const [x, y] of [[70, 70], [100, 100], [150, 150]]) {
+        assert.deepEqual(VA.validate(two(x, y)), [], x + ',' + y);
+        // what create() does in the narrowest host: not scaled either
+        const r = fit((x - y) * Math.cos(Math.PI / 6) + 1.8, (x + y) * 0.5 + 1, 280, 1);
+        assert.equal(r.scaled, false, x + ',' + y);
+    }
+    // really too big: wide and tall (canvas area), very tall, very wide
+    for (const [x, y] of [[300, 0], [400, 400], [0, 300]]) {
+        assert.ok(VA.validate(two(x, y)).some((p) => /too big for one canvas/.test(p)), x + ',' + y);
+    }
+});

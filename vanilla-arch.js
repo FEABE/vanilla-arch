@@ -1,4 +1,4 @@
-/*! vanilla-arch 0.1.1 | MIT License | (c) 2026 FEABE */
+/*! vanilla-arch 0.1.2 | MIT License | (c) 2026 FEABE */
 /* Isometric architecture diagrams drawn with Canvas 2D. No dependencies, no build step.
  *
  *   VanillaArch.create(host, data, opts) -> { setScenario(id), select(id), toDataURL(), destroy() }
@@ -26,7 +26,7 @@
 })(typeof window !== 'undefined' ? window : null, function (root) {
   'use strict';
 
-  var VERSION = '0.1.1';
+  var VERSION = '0.1.2';
   var SPEED = 0.30;            // packet speed, px / ms
   var ICON = 24;               // icon design size (px); scaled when drawn
   var DEFAULT_FONT = 'ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace';
@@ -35,7 +35,7 @@
   // Browsers fail or go blank above some canvas size (iOS Safari: 16,777,216 backing pixels in total).
   var LIMITS = Object.freeze({ maxSide: 8192, maxPixels: 16777216 });   // CSS px per side, backing pixels (after dpr)
   // Cell size bounds and paddings of the isometric layout (CSS px).
-  var FIT = { umin: 30, umax: 44, padX: 16, padT: 26, padB: 40 };
+  var FIT = { umin: 30, umax: 44, padX: 16, padT: 26, padB: 40, minHost: 280 };   // minHost: narrowest host width used for layout
   var ISO_CX = Math.cos(Math.PI / 6), ISO_SY = 0.5;   // grid -> screen: s = (x - y) * cx, t = (x + y) * sy
   // Size of a drawing spanW x spanH (in cell units) for a host W px wide at device pixel ratio wantDpr.
   // Normally the cell size U stays within [umin, umax]. A huge span lowers U below umin until each side fits
@@ -43,7 +43,7 @@
   function fitCanvas(spanW, spanH, W, wantDpr) {
     spanW = isFinite(spanW) && spanW > 0 ? spanW : 0;
     spanH = isFinite(spanH) && spanH > 0 ? spanH : 0;
-    W = Math.min(LIMITS.maxSide, isFinite(W) && W > 0 ? W : 280);
+    W = Math.min(LIMITS.maxSide, isFinite(W) && W > 0 ? W : FIT.minHost);
     var padW = FIT.padX * 2, padH = FIT.padT + FIT.padB;
     var U = spanW > 0 ? Math.max(FIT.umin, Math.min(FIT.umax, (W - padW) / spanW)) : FIT.umax;
     if (spanW > 0) U = Math.min(U, (LIMITS.maxSide - padW - 1) / spanW);
@@ -203,7 +203,7 @@
       if (isPts(z.pts)) z.pts.forEach(function (p) { ext(p[0], p[1]); });
       else { ext(z.x, z.y); ext(z.x + z.w, z.y + z.h); ext(z.x + z.w, z.y); ext(z.x, z.y + z.h); }
     });
-    if (b.s1 >= b.s0 && fitCanvas(b.s1 - b.s0, b.t1 - b.t0, LIMITS.maxSide, 1).scaled) {
+    if (b.s1 >= b.s0 && fitCanvas(b.s1 - b.s0, b.t1 - b.t0, FIT.minHost, 1).scaled) {
       out.push('coordinates span ' + Math.round(b.x1 - b.x0) + ' x ' + Math.round(b.y1 - b.y0) + ' grid units: too big for one canvas (' +
         LIMITS.maxSide + ' px per side), so the drawing is scaled down and labels may overlap');
     }
@@ -536,7 +536,7 @@
       return r > 0 && r < cw && cw - r < 1 ? Math.min(cw, r + 0.05) : cw;   // + 0.05 absorbs float noise (619.999 -> 620)
     }
     function isoLayout() {
-      W = Math.max(280, Math.floor(hostWidth()));   // wider drawings scroll sideways inside the host
+      W = Math.max(FIT.minHost, Math.floor(hostWidth()));   // wider drawings scroll sideways inside the host
       NODES.forEach(function (n) { byId[n.id].dm = isoDims(byId[n.id]); });
       // extent of the drawing in grid terms (horizontal s = x - y, vertical t = x + y - height)
       var s0 = 1e9, s1 = -1e9, t0 = 1e9, t1 = -1e9;

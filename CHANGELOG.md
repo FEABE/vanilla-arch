@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2 — 2026-11-27
+
+- `validate()` no longer warns about tall but narrow drawings (for example nodes at `(0, 0)` and `(70, 70)`):
+  it measured them against an 8192 px wide host, where the canvas area limit applies, instead of the narrowest host
+  the layout uses (280 px). Drawing is unchanged.
+
 ## 0.1.1 — 2026-11-27
 
 - **Canvas size limit.** The canvas used to grow with the coordinates without bound (a node at `x: 10000` asked for
