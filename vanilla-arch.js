@@ -1,4 +1,4 @@
-/*! vanilla-arch 0.1.0 | MIT License | (c) 2026 FEABE */
+/*! vanilla-arch 0.1.1 | MIT License | (c) 2026 FEABE */
 /* Isometric architecture diagrams drawn with Canvas 2D. No dependencies, no build step.
  *
  *   VanillaArch.create(host, data, opts) -> { setScenario(id), select(id), toDataURL(), destroy() }
@@ -26,10 +26,43 @@
 })(typeof window !== 'undefined' ? window : null, function (root) {
   'use strict';
 
-  var VERSION = '0.1.0';
+  var VERSION = '0.1.1';
   var SPEED = 0.30;            // packet speed, px / ms
   var ICON = 24;               // icon design size (px); scaled when drawn
   var DEFAULT_FONT = 'ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace';
+
+  //════════════ canvas size (pure) ════════════
+  // Browsers fail or go blank above some canvas size (iOS Safari: 16,777,216 backing pixels in total).
+  var LIMITS = Object.freeze({ maxSide: 8192, maxPixels: 16777216 });   // CSS px per side, backing pixels (after dpr)
+  // Cell size bounds and paddings of the isometric layout (CSS px).
+  var FIT = { umin: 30, umax: 44, padX: 16, padT: 26, padB: 40 };
+  var ISO_CX = Math.cos(Math.PI / 6), ISO_SY = 0.5;   // grid -> screen: s = (x - y) * cx, t = (x + y) * sy
+  // Size of a drawing spanW x spanH (in cell units) for a host W px wide at device pixel ratio wantDpr.
+  // Normally the cell size U stays within [umin, umax]. A huge span lowers U below umin until each side fits
+  // maxSide; a big canvas lowers dpr (and, if even dpr 1 is too much, U) until it fits maxPixels. Never throws.
+  function fitCanvas(spanW, spanH, W, wantDpr) {
+    spanW = isFinite(spanW) && spanW > 0 ? spanW : 0;
+    spanH = isFinite(spanH) && spanH > 0 ? spanH : 0;
+    W = Math.min(LIMITS.maxSide, isFinite(W) && W > 0 ? W : 280);
+    var padW = FIT.padX * 2, padH = FIT.padT + FIT.padB;
+    var U = spanW > 0 ? Math.max(FIT.umin, Math.min(FIT.umax, (W - padW) / spanW)) : FIT.umax;
+    if (spanW > 0) U = Math.min(U, (LIMITS.maxSide - padW - 1) / spanW);
+    if (spanH > 0) U = Math.min(U, (LIMITS.maxSide - padH - 1) / spanH);
+    function size(u) { return [Math.max(W, Math.ceil(spanW * u + padW)), Math.ceil(spanH * u + padH)]; }
+    var s = size(U);
+    if (s[0] * s[1] > LIMITS.maxPixels) {   // even at dpr 1: shrink the cells (binary search, area grows with U)
+      var lo = 0, hi = U;
+      for (var k = 0; k < 60; k++) { var mid = (lo + hi) / 2; if (size(mid)[0] * size(mid)[1] <= LIMITS.maxPixels) lo = mid; else hi = mid; }
+      U = lo; s = size(U);
+    }
+    var dpr = isFinite(wantDpr) && wantDpr > 0 ? wantDpr : 1;
+    if (s[0] * s[1] * dpr * dpr > LIMITS.maxPixels) {
+      dpr = Math.floor(Math.sqrt(LIMITS.maxPixels / (s[0] * s[1])) * 1000) / 1000;
+      // the canvas is Math.round(CW * dpr) x Math.round(H * dpr): step down until the rounded size fits too
+      while (dpr > 1 && Math.round(s[0] * dpr) * Math.round(s[1] * dpr) > LIMITS.maxPixels) dpr = Math.round(dpr * 1000 - 1) / 1000;
+    }
+    return { U: U, CW: s[0], H: s[1], dpr: dpr, scaled: U < FIT.umin };
+  }
 
   // Icon names the renderer can draw. Anything else falls back to a plain rounded square.
   var ICONS = ['users', 'person', 'mobile', 'browser', 'server', 'db', 'cache', 'bucket', 'queue', 'lambda',
@@ -154,6 +187,26 @@
         if (f.delay != null && !isNum(f.delay)) out.push(fa + ': delay must be a number (ms)');
       });
     });
+    // A huge coordinate span does not fit one canvas: create() then scales the drawing down (LIMITS).
+    var b = { s0: Infinity, s1: -Infinity, t0: Infinity, t1: -Infinity, x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity };
+    function ext(x, y) {
+      if (!isNum(x) || !isNum(y)) return;
+      var s = (x - y) * ISO_CX, t = (x + y) * ISO_SY;
+      b.s0 = Math.min(b.s0, s); b.s1 = Math.max(b.s1, s); b.t0 = Math.min(b.t0, t); b.t1 = Math.max(b.t1, t);
+      b.x0 = Math.min(b.x0, x); b.x1 = Math.max(b.x1, x); b.y0 = Math.min(b.y0, y); b.y1 = Math.max(b.y1, y);
+    }
+    arr(A.nodes).forEach(function (n) {
+      if (n && typeof n === 'object') { ext(n.x - 0.5, n.y - 0.5); ext(n.x + 0.5, n.y + 0.5); ext(n.x + 0.5, n.y - 0.5); ext(n.x - 0.5, n.y + 0.5); }
+    });
+    arr(A.zones).forEach(function (z) {
+      if (!z || typeof z !== 'object') return;
+      if (isPts(z.pts)) z.pts.forEach(function (p) { ext(p[0], p[1]); });
+      else { ext(z.x, z.y); ext(z.x + z.w, z.y + z.h); ext(z.x + z.w, z.y); ext(z.x, z.y + z.h); }
+    });
+    if (b.s1 >= b.s0 && fitCanvas(b.s1 - b.s0, b.t1 - b.t0, LIMITS.maxSide, 1).scaled) {
+      out.push('coordinates span ' + Math.round(b.x1 - b.x0) + ' x ' + Math.round(b.y1 - b.y0) + ' grid units: too big for one canvas (' +
+        LIMITS.maxSide + ' px per side), so the drawing is scaled down and labels may overlap');
+    }
     return out;
   }
 
@@ -453,7 +506,7 @@
 
     //════════════ isometric projection ════════════
     // Grid (x, y, z) -> screen. x runs to the lower right, y to the lower left, z up (one cell = U px).
-    var ISO = { cx: Math.cos(Math.PI / 6), sy: 0.5, umin: 30, umax: 44, padX: 16, padT: 26, padB: 40, foot: 0.85, slab: 0.22, gap: 0.07,
+    var ISO = { cx: ISO_CX, sy: ISO_SY, padT: FIT.padT, foot: 0.85, slab: 0.22, gap: 0.07,
       dimBlock: 0.62, dimLabel: 0.72 };   // blocks outside the scenario stay readable (only flow members are full strength)
     var U = 32, ox = 0, oy = 0, CW = 0;
     function P(x, y, z) { return [ox + (x - y) * ISO.cx * U, oy + (x + y) * ISO.sy * U - (z || 0) * U]; }
@@ -497,14 +550,15 @@
         acc(n.x - m.hs, n.y - m.hs, m.top); acc(n.x + m.hs, n.y + m.hs); acc(n.x + m.hs, n.y - m.hs); acc(n.x - m.hs, n.y + m.hs);
       });
       if (s1 < s0) { s0 = s1 = t0 = t1 = 0; }   // empty diagram
+      if (!isFinite(s0) || !isFinite(s1) || !isFinite(t0) || !isFinite(t1)) { s0 = s1 = t0 = t1 = 0; }
       var spanW = s1 - s0, spanH = t1 - t0;
-      // cell size: fit the host width but keep labels readable (if it still does not fit, the host scrolls)
-      U = Math.max(ISO.umin, Math.min(ISO.umax, (W - ISO.padX * 2) / spanW));
-      CW = Math.max(W, Math.ceil(spanW * U + ISO.padX * 2));
+      // cell size: fit the host width but keep labels readable (if it still does not fit, the host scrolls);
+      // a drawing too big for one canvas is scaled down instead (LIMITS)
+      var fit = fitCanvas(spanW, spanH, W, opts.dpr || Math.min(2, root.devicePixelRatio || 1));
+      U = fit.U; CW = fit.CW; H = fit.H;
       ox = (CW - spanW * U) / 2 - s0 * U; oy = ISO.padT - t0 * U;
-      H = Math.ceil(spanH * U + ISO.padT + ISO.padB);
       NODES.forEach(function (n) { var b = byId[n.id], p = P(n.x, n.y, 0); b.x = p[0]; b.y = p[1]; });
-      dpr = opts.dpr || Math.min(2, root.devicePixelRatio || 1);
+      dpr = fit.dpr;
       canvas.width = Math.round(CW * dpr); canvas.height = Math.round(H * dpr);
       canvas.style.width = CW + 'px'; canvas.style.height = H + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -959,6 +1013,7 @@
   return {
     version: VERSION, create: create, validate: validate, iconOf: iconOf,
     ICONS: ICONS.slice(), ICON_RULES: ICON_RULES.slice(), FLOW_KINDS: FLOW_KINDS.slice(),
-    LIGHT: Object.freeze(LIGHT), DARK: Object.freeze(DARK)
+    LIGHT: Object.freeze(LIGHT), DARK: Object.freeze(DARK),
+    LIMITS: LIMITS, _fitCanvas: fitCanvas   // _fitCanvas: internal, exposed for tests
   };
 });

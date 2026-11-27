@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const VA = require('../vanilla-arch.js');
+const VA = require('./helpers/subject.js').load();
 
 const icon = (label, extra) => VA.iconOf(Object.assign({ id: 'n', label }, extra));
 

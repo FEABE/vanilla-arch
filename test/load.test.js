@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const src = fs.readFileSync(path.join(__dirname, '..', 'vanilla-arch.js'), 'utf8');
+const src = fs.readFileSync(require('./helpers/subject.js').file, 'utf8');
 
 test('as a classic <script>: defines window.VanillaArch and nothing else', () => {
   const window = {};

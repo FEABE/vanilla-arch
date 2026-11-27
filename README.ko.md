@@ -38,6 +38,16 @@ fetch('my-system.json').then((r) => r.json()).then((data) => {
 });
 ```
 
+**파일.** `vanilla-arch.js` 는 읽을 수 있는 원본, `vanilla-arch.min.js` 는 같은 라이브러리의 압축본이다
+(65 KB → 36 KB, gzip 20.2 KB → 13.6 KB). 운영에는 `.min.js` 를 쓰면 된다. 둘 다 같은 `VanillaArch` 를 만들고,
+같은 테스트 전체와 픽셀 단위 렌더 비교를 통과한다. `.min.js` 는 vanilla-kit 의 직접 만든 압축기로 만든다
+(`node scripts/build-min.js`, 제3자 도구 없음). `vanilla-arch.css` 는 어느 쪽이든 필요하다.
+
+```html
+<link rel="stylesheet" href="vanilla-arch.css">
+<script src="vanilla-arch.min.js"></script>
+```
+
 Node(또는 번들러)에서 `require('./vanilla-arch.js')` 하면 같은 객체가 나온다. `validate` · `iconOf` 는 DOM 없이 동작하고, `create` 만 브라우저가 필요하다.
 
 예제 실행:
@@ -137,8 +147,17 @@ node examples/serve.mjs        # http://127.0.0.1:8080/examples/
 - 선 · 흐름의 없는 노드 id, 너무 짧은 흐름 경로
 - 모르는 layer · 아이콘 · 흐름 kind
 - 잘못된 구역, 잘못된 `s`/`stack`/`every`/`delay`
+- 캔버스 하나에 담기에 너무 넓은 좌표 범위 (아래 *캔버스 크기 제한*)
 
 `create` 는 잘못된 데이터에도 던지지 않는다. 그릴 수 없는 것은 건너뛴다.
+
+### 캔버스 크기 제한
+
+브라우저는 일정 크기를 넘는 캔버스를 거부하거나 빈 화면으로 둔다(iOS Safari 는 전체 16,777,216 픽셀).
+캔버스 크기는 좌표를 따라가므로 `VanillaArch.LIMITS` 로 묶는다: 한 변 최대 `maxSide`(8192) CSS px, 기기 픽셀 비율을
+곱한 실제 픽셀 최대 `maxPixels`(16,777,216). 너무 큰 캔버스는 먼저 픽셀 비율을 낮추고, 좌표가 너무 넓게 퍼진
+그림은 칸 크기를 읽기 좋은 최소값 아래로 줄인다(전체가 작아지고 글자가 겹칠 수 있다). 오류는 던지지 않고,
+`validate()` 가 그런 좌표 범위를 알려 준다.
 
 ## 옵션
 
@@ -240,7 +259,9 @@ Canvas 2D (`ellipse`, `arcTo`), `MutationObserver`, `Math.hypot` 이 있는 요�
 node --test
 ```
 
-테스트는 의존성이 없다. `validate`, `iconOf`, 일반 스크립트 · CommonJS 로 불러오기를 확인한다.
+테스트는 의존성이 없다. `validate`, `iconOf`, 캔버스 크기 제한, 일반 스크립트 · CommonJS 로 불러오기를 확인한다.
+`test/min.test.js` 는 테스트 전체를 `vanilla-arch.min.js` 로 한 번 더 돌리고(`VANILLA_ARCH_MIN=1 node --test` 는 그것만),
+옆에 vanilla-kit 이 있으면(또는 `VANILLA_KIT`) `.min.js` 가 최신인지 확인한다. 변경 내역은 [CHANGELOG.md](CHANGELOG.md).
 
 ## 라이선스
 

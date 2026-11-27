@@ -38,6 +38,16 @@ fetch('my-system.json').then((r) => r.json()).then((data) => {
 });
 ```
 
+**Files.** `vanilla-arch.js` is the readable source; `vanilla-arch.min.js` is the same library minified
+(36 KB instead of 65 KB; 13.6 KB instead of 20.2 KB gzipped) — use it in production. Both define the same `VanillaArch` and pass the
+same test suite and a pixel-for-pixel render comparison. The `.min.js` is built with the hand-written minifier from
+vanilla-kit (`node scripts/build-min.js`), no third-party tools. `vanilla-arch.css` is needed with either.
+
+```html
+<link rel="stylesheet" href="vanilla-arch.css">
+<script src="vanilla-arch.min.js"></script>
+```
+
 In Node (or a bundler), `require('./vanilla-arch.js')` returns the same object. `validate` and `iconOf` work without a DOM. Only `create` needs a browser.
 
 Try the example locally:
@@ -137,8 +147,17 @@ This pure function returns an array of readable problems, or `[]` when the data 
 - unknown node ids in edges and flows, and flow paths that are too short
 - unknown layers, icons and flow kinds
 - malformed zones, and bad `s`/`stack`/`every`/`delay`
+- coordinate spans too big for one canvas (see *Canvas size limit* below)
 
 `create` never throws on bad data. It skips anything it cannot draw.
+
+### Canvas size limit
+
+Browsers refuse (or silently blank) canvases above a certain size; iOS Safari allows 16,777,216 backing pixels in
+total. The canvas size follows the coordinates, so `VanillaArch.LIMITS` caps it: at most `maxSide` (8192) CSS px per
+side and `maxPixels` (16,777,216) backing pixels after the device pixel ratio. A canvas that would be too large first
+gets a lower pixel ratio; a drawing whose coordinates span too far gets a cell size below the readable minimum
+(everything is scaled down and labels may overlap). Nothing throws, and `validate()` reports such spans.
 
 ## Options
 
@@ -263,7 +282,10 @@ Any current evergreen browser with Canvas 2D (`ellipse`, `arcTo`), `MutationObse
 node --test
 ```
 
-The tests have no dependencies. They cover `validate`, `iconOf` and loading as a classic script or a CommonJS module.
+The tests have no dependencies. They cover `validate`, `iconOf`, the canvas size limit and loading as a classic
+script or a CommonJS module. `test/min.test.js` runs the whole suite again against `vanilla-arch.min.js`
+(`VANILLA_ARCH_MIN=1 node --test` does only that) and, when a vanilla-kit checkout is next to this repository
+(or `VANILLA_KIT` points to one), checks that the `.min.js` is up to date. See [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
