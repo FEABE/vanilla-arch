@@ -5,6 +5,21 @@
 
 [English](README.md)
 
+**직접 만져 보기:** [체험 페이지](https://chlehdwns.dev/tools/arch/) (JSON 을 고치면 바로 다시 그린다) · **CDN:** [cdn.chlehdwns.dev](https://cdn.chlehdwns.dev/#vanilla-arch)
+
+```html
+<link rel="stylesheet" href="https://cdn.chlehdwns.dev/vanilla-arch@0.1.2/vanilla-arch.css"
+      integrity="sha384-Zh4zjq3uG4jMoI1Q7rtgILL0LuZ8NgSirPwlhpWmFhXDKDUYJV/YBxFdzl9neiU6" crossorigin="anonymous">
+<script src="https://cdn.chlehdwns.dev/vanilla-arch@0.1.2/vanilla-arch.min.js"
+        integrity="sha384-T/reUmzGBf43wKZbJ63QJgIcFrwUgvELlB1qpxI6JesdpoMpgQQIsKdQ3FG+oR2r" crossorigin="anonymous"></script>
+```
+
+의존성 없이 직접 만든 도구 모음:
+[vanilla-arch](https://github.com/FEABE/vanilla-arch) (구성도) ·
+[vanilla-kit](https://github.com/FEABE/vanilla-kit) (작은 모듈) ·
+[vanilla-build](https://github.com/FEABE/vanilla-build) (빌드) ·
+[vanilla-deploy](https://github.com/FEABE/vanilla-deploy) (배포)
+
 ![예제 쇼핑몰 구성도, 밝은 테마](docs/shop-light.png)
 ![예제 쇼핑몰 구성도, 어두운 테마](docs/shop-dark.png)
 

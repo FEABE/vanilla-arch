@@ -5,6 +5,21 @@ One hand-written JavaScript file plus a small stylesheet: no dependencies, no bu
 
 [한국어](README.ko.md)
 
+**Try it:** [live playground](https://chlehdwns.dev/tools/arch/) (edit JSON, watch it redraw) · **CDN:** [cdn.chlehdwns.dev](https://cdn.chlehdwns.dev/#vanilla-arch)
+
+```html
+<link rel="stylesheet" href="https://cdn.chlehdwns.dev/vanilla-arch@0.1.2/vanilla-arch.css"
+      integrity="sha384-Zh4zjq3uG4jMoI1Q7rtgILL0LuZ8NgSirPwlhpWmFhXDKDUYJV/YBxFdzl9neiU6" crossorigin="anonymous">
+<script src="https://cdn.chlehdwns.dev/vanilla-arch@0.1.2/vanilla-arch.min.js"
+        integrity="sha384-T/reUmzGBf43wKZbJ63QJgIcFrwUgvELlB1qpxI6JesdpoMpgQQIsKdQ3FG+oR2r" crossorigin="anonymous"></script>
+```
+
+Part of a small family of zero-dependency, hand-written tools:
+[vanilla-arch](https://github.com/FEABE/vanilla-arch) (diagrams) ·
+[vanilla-kit](https://github.com/FEABE/vanilla-kit) (small modules) ·
+[vanilla-build](https://github.com/FEABE/vanilla-build) (build) ·
+[vanilla-deploy](https://github.com/FEABE/vanilla-deploy) (deploy)
+
 ![Example shop diagram, light theme](docs/shop-light.png)
 ![Example shop diagram, dark theme](docs/shop-dark.png)
 
